@@ -1,0 +1,21 @@
+apply plugin: 'java'
+apply plugin: 'war'
+
+group = 'com.zavabank'
+version = '1.0.0'
+
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+    implementation 'com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11'
+}
+
+war {
+    archiveBaseName = 'ROOT'
+}
