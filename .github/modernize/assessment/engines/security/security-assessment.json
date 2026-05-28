@@ -1,0 +1,97 @@
+{
+  "GeneratedAt": "2026-05-28T23:21:12.0000000Z",
+  "ProjectPath": ".",
+  "Summary": {
+    "TotalFindings": 6,
+    "CveCount": 0,
+    "CweCount": 6,
+    "BySeverity": {
+      "optional": 3,
+      "potential": 3
+    },
+    "ByCategory": {
+      "Code Quality": 3,
+      "Credentials & Secrets": 3
+    },
+    "TotalRulesAssessed": 59,
+    "RulesPassed": 53
+  },
+  "CveFindings": [],
+  "CweFindings": [
+    {
+      "Id": "CWE-477",
+      "Name": "Use of Obsolete Function",
+      "Category": "Code Quality",
+      "Severity": "optional",
+      "StoryPoint": 1,
+      "Description": "The code uses deprecated or obsolete functions, which suggests that the code has not been actively reviewed or maintained.",
+      "Files": [
+        "src/main/java/com/zavabank/ledger/LedgerConnectionFactory.java"
+      ],
+      "Explanation": "In LedgerConnectionFactory (line 10), Class.forName(\"com.microsoft.sqlserver.jdbc.SQLServerDriver\") is used to manually register the JDBC driver. This practice has been obsolete since JDBC 4.0 (Java SE 6), which introduced automatic driver discovery via the ServiceLoader mechanism. Modern JDBC drivers, including mssql-jdbc, register themselves automatically through META-INF/services without requiring an explicit Class.forName() call."
+    },
+    {
+      "Id": "CWE-772",
+      "Name": "Missing Release of Resource after Effective Lifetime",
+      "Category": "Code Quality",
+      "Severity": "potential",
+      "StoryPoint": 3,
+      "Description": "The product does not release a resource after its effective lifetime has ended, i.e., after the resource is no longer needed.",
+      "Files": [
+        "src/main/java/com/zavabank/ledger/TransactionServlet.java"
+      ],
+      "Explanation": "In TransactionServlet, several helper methods (readBalance at line 144, findTransactionType at line 157, updateAccountBalance at line 174, insertTransaction at line 186) create PreparedStatement and ResultSet objects but close them inline without wrapping in try-finally blocks. If a SQLException is thrown before the close() calls are reached, these JDBC resources may not be released immediately. For example, in readBalance(), if resultSet.next() or getBigDecimal() throws, both resultSet.close() (line 152) and statement.close() (line 153) are skipped. Although the outer connection.close() in postTransaction()'s finally block (line 134) may cascade-close associated statements, relying on this behavior is implementation-dependent."
+    },
+    {
+      "Id": "CWE-1057",
+      "Name": "Data Access Operations Outside of Expected Data Manager Component",
+      "Category": "Code Quality",
+      "Severity": "potential",
+      "StoryPoint": 5,
+      "Description": "The product uses a dedicated, central data manager component as required by design, but it contains code that performs data-access operations that do not use this data manager.",
+      "Files": [
+        "src/main/java/com/zavabank/ledger/AccountServlet.java",
+        "src/main/java/com/zavabank/ledger/TransactionServlet.java"
+      ],
+      "Explanation": "The application has LedgerConnectionFactory as a connection-management component, but all SQL data access operations (SELECT, UPDATE, INSERT) are performed directly inside servlet classes. AccountServlet (lines 62, 98) and TransactionServlet (lines 145, 158, 175, 195) construct and execute SQL queries inline without delegating to a dedicated data access layer (e.g., DAO or Repository). This bypasses any centralized data management and mixes business logic with data access within the presentation layer (servlets)."
+    },
+    {
+      "Id": "CWE-259",
+      "Name": "Use of Hard-coded Password",
+      "Category": "Credentials & Secrets",
+      "Severity": "optional",
+      "StoryPoint": 5,
+      "Description": "The product contains a hard-coded password, which it uses for its own inbound authentication or for outbound communication to external components.",
+      "Files": [
+        "src/main/resources/ledger.properties"
+      ],
+      "Explanation": "The file src/main/resources/ledger.properties (line 5) contains a hard-coded database password: db.****** This password is stored as a plain-text default in the bundled properties file. While LedgerConfig.read() does allow the password to be overridden via the DB_PASSWORD environment variable, shipping a hard-coded password as a fallback in the packaged artifact poses a security risk if the environment variable is not set in production."
+    },
+    {
+      "Id": "CWE-778",
+      "Name": "Insufficient Logging",
+      "Category": "Credentials & Secrets",
+      "Severity": "potential",
+      "StoryPoint": 3,
+      "Description": "When a security-critical event occurs, the product either does not record the event or omits important details about the event when logging it.",
+      "Files": [
+        "src/main/java/com/zavabank/ledger/AccountServlet.java",
+        "src/main/java/com/zavabank/ledger/TransactionServlet.java",
+        "src/main/java/com/zavabank/ledger/LedgerConfig.java"
+      ],
+      "Explanation": "The application contains no logging framework (no SLF4J, Log4j, or java.util.logging). Security-critical events are silently discarded: (1) AccountServlet catches SQLException at line 82 and 121 without any logging, returning only a generic error response; (2) TransactionServlet catches all Exception at line 31 and only returns a generic error XML with no record of the failure; (3) LedgerConfig silently ignores an IOException when loading the properties file (line 17), making configuration failures undetectable; (4) Financial transaction failures (SQLException/IllegalArgumentException in TransactionServlet.postTransaction(), lines 126-130) are rethrown but never logged before or after the rollback. Failed authentication attempts, database errors, and financial transaction anomalies are not recorded anywhere."
+    },
+    {
+      "Id": "CWE-798",
+      "Name": "Use of Hard-coded Credentials",
+      "Category": "Credentials & Secrets",
+      "Severity": "optional",
+      "StoryPoint": 5,
+      "Description": "The product contains hard-coded credentials, such as a password or cryptographic key.",
+      "Files": [
+        "src/main/resources/ledger.properties"
+      ],
+      "Explanation": "The bundled configuration file src/main/resources/ledger.properties contains hard-coded database credentials: db.user=sa (line 4) and db.****** (line 5). The 'sa' (system administrator) account has full DBA privileges on SQL Server, making the exposure of these credentials especially critical. Although LedgerConfig.read() checks for DB_USER and DB_PASSWORD environment variables first, these hard-coded values are packaged into the WAR artifact and serve as insecure fallback defaults."
+    }
+  ]
+}
