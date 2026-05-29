@@ -1,0 +1,98 @@
+{
+  "metadata": {
+    "analysisStartTime": "2026-05-29T03:17:39Z",
+    "targetIds": [
+      "azure-aks",
+      "azure-appservice"
+    ],
+    "targetDisplayNames": [
+      "Azure Kubernetes Service",
+      "Azure App Service"
+    ]
+  },
+  "rules": {
+    "java-config-externalization": {
+      "title": "Externalize database configuration for cloud deployment",
+      "description": "Database host and credentials should be fully externalized per environment.",
+      "severity": "potential",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 3
+    },
+    "java-servlet-modernization": {
+      "title": "Migrate legacy Java EE servlet APIs to Jakarta ecosystem",
+      "description": "Application is built on javax.servlet APIs that require migration planning for newer runtimes.",
+      "severity": "mandatory",
+      "labels": [
+        "domain=java-upgrade"
+      ],
+      "effort": 8
+    }
+  },
+  "projects": [
+    {
+      "properties": {
+        "repo": "mnm-ZavaLedger",
+        "appName": "ZavaLedger",
+        "languages": [
+          "Java"
+        ],
+        "frameworks": [
+          "Java Servlet API"
+        ],
+        "tools": [
+          "Gradle"
+        ],
+        "applicationType": "Web Application",
+        "description": "Core ledger API for account balance and transaction posting.",
+        "linesOfCode": 650,
+        "tags": [
+          "ledger",
+          "sqlserver",
+          "servlet"
+        ],
+        "jdkVersion": "17"
+      },
+      "incidents": [
+        {
+          "ruleId": "java-config-externalization",
+          "location": "src/main/java/com/zavabank/ledger/LedgerConfig.java",
+          "line": 24,
+          "message": "Default DB properties are bundled with the app and should be environment-injected.",
+          "targets": {
+            "azure-aks": {
+              "effort": 3
+            }
+          }
+        },
+        {
+          "ruleId": "java-servlet-modernization",
+          "location": "src/main/webapp/WEB-INF/web.xml",
+          "line": 2,
+          "message": "Legacy servlet descriptor and javax APIs indicate upgrade work for modern runtimes.",
+          "targets": {
+            "azure-aks": {
+              "effort": 8
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "security": [
+    {
+      "id": "SEC-001",
+      "title": "Default database password is present in configuration",
+      "severity": "mandatory",
+      "storyPoint": 5,
+      "analysis": "A default SQL Server password is present in ledger.properties and should be moved to a secure secret store.",
+      "evidence": {
+        "files": [
+          "src/main/resources/ledger.properties (line 5)"
+        ]
+      }
+    }
+  ],
+  "rearchitect": []
+}
