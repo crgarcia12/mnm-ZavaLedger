@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tasks template for modernization plan. Generate this file alongside plan.md to track individual migration tasks.",
+  "tasks": [
+    {
+      "type": "transform",
+      "id": "001-transform-azure-sql-alignment",
+      "description": "Align the application's relational data connectivity with Azure SQL Database for the Azure migration.",
+      "reason": "The application currently depends on a locally configured SQL Server endpoint and must use an Azure-managed relational service as part of the modernization plan.",
+      "requirements": "Move the current SQL Server-backed ledger workload to Azure SQL Database while preserving schema compatibility, account queries, and transaction behavior. Remove local-environment assumptions from database connectivity and align the runtime configuration with Azure-hosted database access.",
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "002-transform-key-vault-secrets",
+      "description": "Replace locally stored database credentials with Azure Key Vault-managed secrets.",
+      "reason": "The application currently includes database credentials in repository-managed configuration, which is not appropriate for an Azure-hosted production workload.",
+      "requirements": "Remove plaintext database credentials from repository-managed configuration and source them from Azure Key Vault for the modernized application. Keep the existing runtime behavior intact while shifting secret ownership to Azure-managed storage.",
+      "dependencies": [
+        "001-transform-azure-sql-alignment"
+      ],
+      "skills": [
+        {
+          "name": "migration-plaintext-credential-to-azure-keyvault",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "security",
+      "id": "003-security-cve-remediation",
+      "description": "Scan project dependencies for known CVEs and remediate confirmed vulnerabilities before Azure deployment.",
+      "reason": "Every modernization plan requires a security remediation task, and this repository also contains legacy dependencies that should be reviewed before release.",
+      "requirements": "Scan all project dependencies for known CVEs and remediate any identified vulnerabilities to ensure the application is secure before deployment. Upgrade vulnerable dependencies to the minimum patched version where possible and verify the project build and tests after remediation.",
+      "dependencies": [
+        "001-transform-azure-sql-alignment",
+        "002-transform-key-vault-secrets"
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "deployment",
+      "id": "004-deployment-container-apps",
+      "description": "Deploy the modernized ZavaLedger application to Azure Container Apps.",
+      "reason": "The application already has a Dockerfile and Azure Container Apps is the default Azure deployment target for containerized Java web applications when no alternative is specified.",
+      "requirements": "Deploy the containerized ZavaLedger application to Azure Container Apps, configure the application settings needed for Azure-hosted database and secret access, and verify the ledger endpoints start successfully in Azure.",
+      "dependencies": [
+        "001-transform-azure-sql-alignment",
+        "002-transform-key-vault-secrets",
+        "003-security-cve-remediation"
+      ],
+      "skills": [
+        {
+          "name": "azcli-containerapp-deploy",
+          "location": "builtin"
+        }
+      ],
+      "targetAzureService": "Azure Container Apps",
+      "resourceStatus": "create new service",
+      "deploymentTool": "bicep"
+    }
+  ],
+  "metadata": {
+    "planName": "modernization-plan",
+    "projectName": "ZavaLedger",
+    "language": "java",
+    "createdAt": "2026-05-29T00:37:52Z",
+    "version": "1.0"
+  }
+}
