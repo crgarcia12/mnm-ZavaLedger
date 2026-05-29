@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "analysisStartTime": "2026-05-29T04:18:05Z",
+    "tool": "AppCAT",
+    "toolVersion": "unknown",
+    "sourceDirectory": ".",
+    "generatedBy": "assessment-skill-workflow"
+  },
+  "rules": {},
+  "projects": [
+    {
+      "properties": {
+        "repo": "mnm-ZavaLedger",
+        "appName": "ZavaLedger",
+        "languages": [
+          "Java"
+        ],
+        "frameworks": [
+          "Java Servlet 4.0",
+          "JSP"
+        ],
+        "tools": [
+          "Gradle",
+          "Docker"
+        ],
+        "applicationType": "Web API",
+        "jdkVersion": "17"
+      },
+      "incidents": []
+    }
+  ],
+  "security": [
+    {
+      "id": "CWE-259",
+      "title": "Use of Hard-coded Password",
+      "category": "Credentials & Secrets",
+      "severity": "optional",
+      "description": "The product contains a hard-coded password, which it uses for its own inbound authentication or for outbound communication to external components.",
+      "evidence": {
+        "files": [
+          "src/main/resources/ledger.properties:5"
+        ],
+        "explanation": "Hard-coded database password found in source-controlled configuration at ledger.properties:5 (`db.password` entry)."
+      },
+      "storyPoint": 5
+    },
+    {
+      "id": "CWE-798",
+      "title": "Use of Hard-coded Credentials",
+      "category": "Credentials & Secrets",
+      "severity": "optional",
+      "description": "The product contains hard-coded credentials, such as a password or cryptographic key.",
+      "evidence": {
+        "files": [
+          "src/main/resources/ledger.properties:4",
+          "src/main/resources/ledger.properties:5"
+        ],
+        "explanation": "Hard-coded database credentials found in source-controlled configuration (`db.user` and `db.password` in ledger.properties)."
+      },
+      "storyPoint": 5
+    }
+  ]
+}
